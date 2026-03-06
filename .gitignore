@@ -2,3 +2,7 @@
 *.lock
 .stack-work
 score.json
+*epub
+img-png
+*kindle*.html
+*kindle*.py
