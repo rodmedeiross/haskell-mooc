@@ -6,3 +6,5 @@ score.json
 img-png
 *kindle*.html
 *kindle*.py
+**/*.png
+**/*.DS_Store

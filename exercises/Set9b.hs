@@ -130,16 +130,16 @@ prettyPrint s a  = unlines [[if arr A.! (r,c) then 'Q' else '.' | c <- [1..s]] |
 --   sameAntidiag (500,5) (5,500) ==> True
 
 sameRow :: Coord -> Coord -> Bool
-sameRow (i, j) (k, l) = todo
+sameRow (i, _) (k, _) = i == k
 
 sameCol :: Coord -> Coord -> Bool
-sameCol (i, j) (k, l) = todo
+sameCol (_, j) (_, l) = j == l
 
 sameDiag :: Coord -> Coord -> Bool
-sameDiag (i, j) (k, l) = todo
+sameDiag (i, j) (k, l) = (i -k) == (j-l)
 
 sameAntidiag :: Coord -> Coord -> Bool
-sameAntidiag (i, j) (k, l) = todo
+sameAntidiag (i, j) (k, l) = (i + j) == (k + l)
 
 --------------------------------------------------------------------------------
 -- Ex 4: In chess, a queen may capture another piece in the same row, column,
@@ -194,8 +194,12 @@ type Candidate = Coord
 
 type Stack = [Coord]
 
+checks :: [Candidate -> Candidate -> Bool]
+checks = [sameRow, sameCol, sameDiag, sameAntidiag]
+
 danger :: Candidate -> Stack -> Bool
-danger = todo
+danger c = any (d c)
+ where d c x = any (\f -> f c x) checks  
 
 --------------------------------------------------------------------------------
 -- Ex 5: In this exercise, the task is to write a modified version of
@@ -230,7 +234,8 @@ danger = todo
 -- solution to this version. Any working solution is okay in this exercise.)
 
 prettyPrint2 :: Size -> Stack -> String
-prettyPrint2 = todo
+prettyPrint2 s a  = unlines [[if arr A.! (r,c) then 'Q' else if danger (r,c) a then '#' else '.' | c <- [1..s]] | r <- [1..s]]
+    where arr = A.array((1,1),(s,s))[((r,c), False) | r <- [1..s] ,  c <- [1..s]] A.// [((r,c), True) | (r,c) <- a]
 
 --------------------------------------------------------------------------------
 -- Ex 6: Now that we can check if a piece can be safely placed into a square in
@@ -275,7 +280,11 @@ prettyPrint2 = todo
 --     Q#######
 
 fixFirst :: Size -> Stack -> Maybe Stack
-fixFirst n s = todo
+fixFirst n (c:cs) = go c cs
+  where go (x,y) cs
+          | x > n || x < 0 || y > n || y < 0 = Nothing
+          | not (danger (x,y) cs) = Just ((x,y):cs)
+          | otherwise = go (x, y + 1) cs
 
 --------------------------------------------------------------------------------
 -- Ex 7: We need two helper functions for stack management.
@@ -301,10 +310,10 @@ fixFirst n s = todo
 -- Hint: Remember nextRow and nextCol? Use them!
 
 continue :: Stack -> Stack
-continue s = todo
+continue (c:stack) = (nextRow c):c:stack
 
 backtrack :: Stack -> Stack
-backtrack s = todo
+backtrack (_:y:stack) = (nextCol y):stack
 
 --------------------------------------------------------------------------------
 -- Ex 8: Let's take a step. Our algorithm solves the problem (in a
@@ -373,7 +382,10 @@ backtrack s = todo
 --     step 8 [(6,1),(5,4),(4,2),(3,5),(2,3),(1,1)] ==> [(5,5),(4,2),(3,5),(2,3),(1,1)]
 
 step :: Size -> Stack -> Stack
-step = todo
+step n s = case fixFirst n s of 
+              (Just x) -> continue x
+              Nothing -> backtrack s
+            
 
 --------------------------------------------------------------------------------
 -- Ex 9: Let's solve our puzzle! The function finish takes a partial
@@ -388,7 +400,12 @@ step = todo
 -- solve the n queens problem.
 
 finish :: Size -> Stack -> Stack
-finish = todo
+finish n s 
+      | l == (n + 1) = tail stepIn
+      | otherwise = finish n stepIn
+      where 
+         stepIn = (step n s)
+         l = length stepIn
 
 solve :: Size -> Stack
 solve n = finish n [(1, 1)]
